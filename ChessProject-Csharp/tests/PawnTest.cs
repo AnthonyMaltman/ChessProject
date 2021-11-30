@@ -1,59 +1,111 @@
 ﻿using NUnit.Framework;
+using SolarWinds.MSP.Chess.Enums;
+using System.Linq;
 
 namespace SolarWinds.MSP.Chess
 {
 	[TestFixture]
 	public class PawnTest
 	{
-		private ChessBoard chessBoard;
-		private Pawn pawn;
+        [Test]
+        public void GetChordinates_ReturnsTheCorrectXAndYValues_WhenCalled()
+        {
+            // setup
+            var player1Settings = new Player(Direction.Up, PieceColor.White);
 
-		[SetUp]
-		public void SetUp()	
-		{
-			chessBoard = new ChessBoard();
-			pawn = new Pawn(PieceColor.Black);
-		}
+            // act
+            var chessBoard = new ChessBoard();
+            chessBoard.New(player1Settings);
 
-		[Test]
-		public void ChessBoard_Add_Sets_XCoordinate()
-		{
-			chessBoard.Add(pawn, 6, 3, PieceColor.Black);
-			Assert.AreEqual(pawn.XCoordinate, 6);
-		}
+            var piece1 = chessBoard.GetPieces().First();
+            var piece2 = chessBoard.GetPieces().ToList()[4];
+            var piece3 = chessBoard.GetPieces().ToList()[10];
 
-		[Test]
-		public void ChessBoard_Add_Sets_YCoordinate()
-		{
-			chessBoard.Add(pawn, 6, 3, PieceColor.Black);
-			Assert.AreEqual(pawn.YCoordinate, 3);
-		}
+            var chords1 = piece1.GetChordinates();
+            var chords2 = piece2.GetChordinates();
+            var chords3 = piece3.GetChordinates();
 
-		[Test]
-		public void Pawn_Move_IllegalCoordinates_Right_DoesNotMove()
-		{
-			chessBoard.Add(pawn, 6, 3, PieceColor.Black);
-			pawn.Move(MovementType.Move, 7, 3);
-            Assert.AreEqual(pawn.XCoordinate, 6);
-            Assert.AreEqual(pawn.YCoordinate, 3);
-		}
+            // assert
+            Assert.IsTrue(chords1.X == 0);
+            Assert.IsTrue(chords1.Y == 1);
 
-		[Test]
-		public void Pawn_Move_IllegalCoordinates_Left_DoesNotMove()
-		{
-			chessBoard.Add(pawn, 6, 3, PieceColor.Black);
-			pawn.Move(MovementType.Move, 4, 3);
-            Assert.AreEqual(pawn.XCoordinate, 6);
-            Assert.AreEqual(pawn.YCoordinate, 3);
-		}
+            Assert.IsTrue(chords2.X == 4);
+            Assert.IsTrue(chords2.Y == 1);
 
-		[Test]
-		public void Pawn_Move_LegalCoordinates_Forward_UpdatesCoordinates()
-		{
-			chessBoard.Add(pawn, 6, 3, PieceColor.Black);
-			pawn.Move(MovementType.Move, 6, 2);
-			Assert.AreEqual(pawn.XCoordinate, 6);
-            Assert.AreEqual(pawn.YCoordinate, 2);
-		}
-	}
+            Assert.IsTrue(chords3.X == 2);
+            Assert.IsTrue(chords3.Y == 6);
+        }
+
+        [Test]
+        public void Move_ReturnsIlegalMove_WhenYouMoveAPieceBelongingToTheWrongPlayerInPlay()
+        {
+            // setup
+            var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+            // act
+            var chessBoard = new ChessBoard();
+            chessBoard.New(player1Settings);
+
+            chessBoard.Move(0, 1, 0, 3, MovementType.Move);
+            chessBoard.Move(1, 6, 1, 4, MovementType.Move);
+            chessBoard.Move(0, 3, 1, 4, MovementType.Capture);
+
+            var allPieces = chessBoard.GetPieces();
+            var playersTurn = chessBoard.WhosTurnIsIt();
+            var piece = chessBoard.GetPiece(1, 4);
+
+            var (aupdatedPieces, result) = piece.Move(playersTurn, allPieces, MovementType.Move, 1, 5);
+
+            // assert
+            Assert.IsTrue(result == MoveResult.IlegalMove);
+        }
+
+        [Test]
+        public void Move_ReturnsMoved_WhenYouMoveAValidPiecey()
+        {
+            // setup
+            var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+            // act
+            var chessBoard = new ChessBoard();
+            chessBoard.New(player1Settings);
+
+            chessBoard.Move(0, 1, 0, 3, MovementType.Move);
+            chessBoard.Move(1, 6, 1, 4, MovementType.Move);
+            chessBoard.Move(0, 3, 1, 4, MovementType.Capture);
+
+            var allPieces = chessBoard.GetPieces();
+            var playersTurn = chessBoard.WhosTurnIsIt();
+            var piece = chessBoard.GetPiece(2, 6);
+
+            var (aupdatedPieces, result) = piece.Move(playersTurn, allPieces, MovementType.Move, 2, 4);
+
+            // assert
+            Assert.IsTrue(result == MoveResult.Moved);
+        }
+
+        [Test]
+        public void Move_ReturnsIlegalMove_WhenMoveAPawnInTheWrongDirection()
+        {
+            // setup
+            var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+            // act
+            var chessBoard = new ChessBoard();
+            chessBoard.New(player1Settings);
+
+            chessBoard.Move(0, 1, 0, 3, MovementType.Move);
+            chessBoard.Move(1, 6, 1, 4, MovementType.Move);
+            chessBoard.Move(0, 3, 1, 4, MovementType.Capture);
+
+            var allPieces = chessBoard.GetPieces();
+            var playersTurn = chessBoard.WhosTurnIsIt();
+            var piece = chessBoard.GetPiece(2, 6);
+
+            var (aupdatedPieces, result) = piece.Move(playersTurn, allPieces, MovementType.Move, 2, 7);
+
+            // assert
+            Assert.IsTrue(result == MoveResult.IlegalMove);
+        }
+    }
 }

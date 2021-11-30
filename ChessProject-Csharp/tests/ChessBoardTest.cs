@@ -1,111 +1,260 @@
 ﻿using NUnit.Framework;
+using SolarWinds.MSP.Chess.Enums;
+using System;
+using System.Linq;
 
 namespace SolarWinds.MSP.Chess
 {
     [TestFixture]
 	public class ChessBoardTest
 	{
-		private ChessBoard chessBoard;
-
-        [SetUp]
-		public void SetUp()
+		[Test]
+		public void GetPiece_ReturnsValidCheckPiece_WhenValidPositionIsGiven()
 		{
-			chessBoard = new ChessBoard();
+			// setup
+			var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			var result = chessBoard.Move(0, 1, 0, 2, MovementType.Move);
+			
+			var piece = chessBoard.GetPiece(0, 2);
+			var pieces = chessBoard.GetPieces().ToList();
+
+			// assert
+			Assert.AreEqual(piece, pieces[0]);
+		}
+
+		[Test]
+		public void GetPiece_ThrowsAnException_WhenInalidPositionIsGiven()
+		{
+			// setup
+			var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			var result = chessBoard.Move(0, 1, 0, 2, MovementType.Move);
+
+			// assert
+			Assert.Throws<Exception>(() => chessBoard.GetPiece(0, 4));
+		}
+
+		[Test]
+		public void Move_ReturnsMoved_WhenValidPositionIsGiven()
+		{
+			// setup
+			var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			var result = chessBoard.Move(0, 1, 0, 2, MovementType.Move);
+
+			// assert
+			Assert.IsTrue(result == MoveResult.Moved);
+		}
+
+		[Test]
+		public void Move_ReturnsNotAValidBoardPosition_WhenIlegalPositionIsGiven()
+		{
+			// setup
+			var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			var result = chessBoard.Move(0,1, -2,2, MovementType.Move);
+
+			// assert
+			Assert.IsTrue(result == MoveResult.NotAValidBoardPosition);
+		}
+
+		[Test]
+		public void Move_ReturnsNotYourPiece_WhenYouTryToMoveAPieceNotBelongingToTheCurrentPlayer()
+		{
+			// setup
+			var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			var result = chessBoard.Move(0, 6, 0, 4, MovementType.Move);
+
+			// assert
+			Assert.IsTrue(result == MoveResult.NotYourPiece);
+		}
+
+		[Test]
+		public void Move_ReturnsIlegalMove_WhenIlegalPositionIsGiven()
+		{
+			// setup
+			var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			var result = chessBoard.Move(0, 1, 1, 2, MovementType.Move);
+
+			// assert
+			Assert.IsTrue(result == MoveResult.IlegalMove);
+		}
+
+		[Test]
+		public void Move_ReturnsCaptured_WhenAValidMoveResultsInACapture()
+		{
+			// setup
+			var player1Settings = new Player(Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			var result = chessBoard.Move(0, 1, 0, 3, MovementType.Move);
+			result = chessBoard.Move(1, 6, 1, 4, MovementType.Move);
+
+			result = chessBoard.Move(0, 3, 1, 4, MovementType.Capture);
+
+			// assert
+			Assert.IsTrue(result == MoveResult.Captured);
+		}
+
+		[Test]
+		public void Move_ReturnsCheck_WhenAValidMoveResultsInCheck()
+		{
+			// TODO - implement check check
+
+			// setup
+
+			// act
+
+			// assert
+			//Assert.IsTrue(result == MoveResult.Check);
+		}
+
+		[Test]
+		public void Move_ReturnsCheckmate_WhenAValidMoveResultsInCheckmate()
+		{
+			// TODO - implement checkmate check
+
+			// setup
+			
+			// act
+			
+			// assert
+			//Assert.IsTrue(result == MoveResult.Checkmate);
+		}
+
+		[Test]
+		public void New_SetsUpANewBoard()
+		{
+			// setup
+			var player1Settings = new Player(Enums.Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			// assert
+
+			//only pawns applied currently
+			// TODO - update when adding new chess piece types
+			Assert.AreEqual(chessBoard.GetPieces().Count, 16);
 		}
 
         [Test]
-		public void Has_MaxBoardWidth_of_7()
+		public void New_DoesNotDuplicatePawnPieces_WhenCalledMultipleTimes()
 		{
-			Assert.AreEqual(ChessBoard.MaxBoardWidth, 7);
+			// setup
+			var player1Settings = new Player(Enums.Direction.Up, PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+			chessBoard.New(player1Settings);
+			chessBoard.New(player1Settings);
+			chessBoard.New(player1Settings);
+
+			// assert
+			Assert.AreEqual(chessBoard.GetPieces().Count(x => x.GetPieceType() == PieceType.Pawn), 16);
+
+			Assert.AreEqual(chessBoard.GetPieces().Count(x => x.GetPieceType() == PieceType.Pawn && x.GetPlayer().Color == PieceColor.White), 8);
+			Assert.AreEqual(chessBoard.GetPieces().Count(x => x.GetPieceType() == PieceType.Pawn && x.GetPlayer().Color == PieceColor.Black), 8);
 		}
 
-        [Test]
-		public void Has_MaxBoardHeight_of_7()
+		[Test]
+		public void New_AddsCorrectNumberOfPawnPieces_WhenCalled()
 		{
-			Assert.AreEqual(ChessBoard.MaxBoardHeight, 7);
+			// setup
+			var player1Settings = new Player(Enums.Direction.Up, Enums.PieceColor.White);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			// assert
+			Assert.AreEqual(chessBoard.GetPieces().Count(x => x.GetPieceType() == PieceType.Pawn), 16);
+
+			Assert.AreEqual(chessBoard.GetPieces().Count(x => x.GetPieceType() == PieceType.Pawn && x.GetPlayer().Color == PieceColor.White), 8);
+			Assert.AreEqual(chessBoard.GetPieces().Count(x => x.GetPieceType() == PieceType.Pawn && x.GetPlayer().Color == PieceColor.Black), 8);
 		}
 
-        [Test]
-		public void IsLegalBoardPosition_True_X_equals_0_Y_equals_0()
+		[Test]
+		public void New_AddsPawnTheCorrectPositions_WhenCalled()
 		{
-			var isValidPosition = chessBoard.IsLegalBoardPosition(0, 0);
-			Assert.IsTrue(isValidPosition);
-		}
+			// TODO - this unit test will break when new check piece types are added
 
-        [Test]
-		public void IsLegalBoardPosition_True_X_equals_5_Y_equals_5()
-		{
-			var isValidPosition = chessBoard.IsLegalBoardPosition(5, 5);
-            Assert.IsTrue(isValidPosition);
-		}
+			// setup
+			var player1Settings = new Player(Enums.Direction.Up, Enums.PieceColor.White);
 
-        [Test]
-		public void IsLegalBoardPosition_False_X_equals_11_Y_equals_5()
-		{
-			var isValidPosition = chessBoard.IsLegalBoardPosition(11, 5);
-            Assert.IsFalse(isValidPosition);
-		}
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
 
-        [Test]
-		public void IsLegalBoardPosition_False_X_equals_0_Y_equals_9()
-		{
-			var isValidPosition = chessBoard.IsLegalBoardPosition(0, 9);
-            Assert.IsFalse(isValidPosition);
-		}
+			// assert
+			var pawns = chessBoard.GetPieces().ToList();
 
-        [Test]
-		public void IsLegalBoardPosition_False_X_equals_11_Y_equals_0()
-		{
-			var isValidPosition = chessBoard.IsLegalBoardPosition(11, 0);
-            Assert.IsFalse(isValidPosition);
-		}
-
-        [Test]
-		public void IsLegalBoardPosition_False_For_Negative_X_Values()
-		{
-			var isValidPosition = chessBoard.IsLegalBoardPosition(-1, 5);
-            Assert.IsFalse(isValidPosition);
-		}
-
-        [Test]
-		public void IsLegalBoardPosition_False_For_Negative_Y_Values()
-		{
-			var isValidPosition = chessBoard.IsLegalBoardPosition(5, -1);
-            Assert.IsFalse(isValidPosition);
-		}
-
-        [Test]
-		public void Avoids_Duplicate_Positioning()
-		{
-			Pawn firstPawn = new Pawn(PieceColor.Black);
-			Pawn secondPawn = new Pawn(PieceColor.Black);
-			chessBoard.Add(firstPawn, 6, 3, PieceColor.Black);
-			chessBoard.Add(secondPawn, 6, 3, PieceColor.Black);
-			Assert.AreEqual(firstPawn.XCoordinate, 6);
-            Assert.AreEqual(firstPawn.YCoordinate, 3);
-            Assert.AreEqual(secondPawn.XCoordinate, -1);
-            Assert.AreEqual(secondPawn.YCoordinate, -1);
-		}
-
-        [Test]
-		public void Limits_The_Number_Of_Pawns()
-		{
-			for (int i = 0; i < 10; i++)
+			var counter = 0;
+			for (int y = 0; y <= 7; y++)
 			{
-				Pawn pawn = new Pawn(PieceColor.Black);
-				int row = i / ChessBoard.MaxBoardWidth;
-				chessBoard.Add(pawn, 6 + row, i % ChessBoard.MaxBoardWidth, PieceColor.Black);
-				if (row < 1)
+				if (y == 1 || y == 6)
 				{
-					Assert.AreEqual(pawn.XCoordinate, (6 + row));
-					Assert.AreEqual(pawn.YCoordinate, (i % ChessBoard.MaxBoardWidth));
-				}
-				else
-				{
-					Assert.AreEqual(pawn.XCoordinate, -1);
-                    Assert.AreEqual(pawn.YCoordinate, -1);
+					Assert.IsTrue(pawns[counter].GetChordinates().Y == y);
+
+					for (int x = 0; x <= 7; x++)
+					{
+						Assert.IsTrue(pawns[counter].GetChordinates().X == x);
+
+						counter++;
+					}
 				}
 			}
+		}
+
+		[Test]
+		public void New_SetsUpAThePlayersCorrectly_WhenCalled()
+		{
+			// setup
+			var player1Settings = new Player(Enums.Direction.Up, PieceColor.White);
+			var player2Settings = new Player(Enums.Direction.Down, PieceColor.Black);
+
+			// act
+			var chessBoard = new ChessBoard();
+			chessBoard.New(player1Settings);
+
+			// assert
+			Assert.AreEqual(chessBoard.Player1.Color, player1Settings.Color);
+			Assert.AreEqual(chessBoard.Player1.Direction, player1Settings.Direction);
+
+			Assert.AreEqual(chessBoard.Player2.Color, player2Settings.Color);
+			Assert.AreEqual(chessBoard.Player2.Direction, player2Settings.Direction);
 		}
 	}
 }
